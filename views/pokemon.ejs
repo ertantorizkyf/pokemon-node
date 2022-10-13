@@ -1,0 +1,322 @@
+<!-- NAVIGATION -->
+<nav class="navbar navbar-expand navbar-light bg-light mx-2">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+        <div class="navbar-nav">
+            <a class="nav-item nav-link" href="javascript:void(0)" id="pokemonListNav">Pokemon List</a>
+            <a class="nav-item nav-link" href="javascript:void(0)" id="myPokemonsNav">My Pokemons</a>
+        </div>
+    </div>
+</nav>
+
+<!-- POKEMON LIST AND DETAIL -->
+<div class="container d-block" id="pokemonListContainer">
+    <div class="col d-flex mt-4">
+        <div class="container col-4">
+            <h2>Pokemons</h2>
+            <p>(click pokemon for detail)</p>
+            <ul id="pokemonList" style="list-style: none; margin:0; padding:0;">
+            </ul>
+            <div class="d-inline-bloc mt-0">
+                <button class="btn btn-primary" id="prev">
+                    <i class="fa fa-angle-left"></i> prev
+                </button>
+                <button class="btn btn-primary" id="next">
+                    next <i class="fa fa-angle-right"></i>
+                </button>
+            </div>
+            <br>
+        </div>
+    
+        <div id="detail" class="container col-8">
+    
+        </div>
+    </div>  
+</div>
+
+<!-- CAUGHT POKEMON -->
+<div class="container d-none" id="myPokemonsContainer">
+    <div class="col d-flex mt-4">
+        <div class="container col-12">
+            <h2>My Pokemons</h2>
+            <br>
+            <table class="table" id="myPokemonsTable">
+                <thead class="table-secondary">
+                    <tr>
+                        <th scope="col">Image</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Nickname</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="myPokemonList">
+                </tbody>
+            </table>
+            <br>
+        </div>
+    </div>  
+</div>
+
+<script>
+    $(document).ready(function() {
+        pokemonList('https://pokeapi.co/api/v2/pokemon');
+
+        $('#next').on('click', function() {
+            var navUrl = $(this).attr('url');
+            if(navUrl != null) pokemonList(navUrl);
+        });
+
+        $('#prev').on('click', function() {
+            var navUrl = $(this).attr('url');
+            if(navUrl != null) pokemonList(navUrl);
+        });
+
+        $('#pokemonListNav').on('click', function() {
+            if($('#pokemonListContainer').hasClass('d-none')) {
+                $('#pokemonListContainer').removeClass('d-none');
+                $('#pokemonListContainer').addClass('d-block');
+                $('#myPokemonsContainer').removeClass('d-block');
+                $('#myPokemonsContainer').addClass('d-none');
+
+                pokemonList('https://pokeapi.co/api/v2/pokemon');
+                document.getElementById('detail').innerHTML = '';
+            }
+        });
+
+        $('#myPokemonsNav').on('click', function() {
+            if($('#myPokemonsContainer').hasClass('d-none')) {
+                $('#myPokemonsContainer').removeClass('d-none');
+                $('#myPokemonsContainer').addClass('d-block');
+                $('#pokemonListContainer').removeClass('d-block');
+                $('#pokemonListContainer').addClass('d-none');
+
+                myPokemonList();
+            }
+        });
+        
+        $(document).on('click', '#saveMyPokemon', function() {
+            saveMyPokemon();
+        });
+
+        $(document).on('click', '.renameButton', function() {
+            $('#myPokemonRenameForm').remove();
+            var myPokemonId = $(this).attr('my-pokemon-id');
+            var oldNickname = $(this).attr('nickname');
+            $(this).after(`
+                <div class="form-inline mt-4" id="myPokemonRenameForm">
+                    <div class="input-group">
+                        <input class="form-control mr-sm-2" type="text" placeholder="Input New Nickname" id="pokemonNewNickname">
+                        <button class="btn btn-success my-2 my-sm-0" id="renameMyPokemon" my-pokemon-id="${myPokemonId}" old-nickname="${oldNickname}">Rename Pokemon</button>
+                    </div>
+                </div>
+            `);
+        });
+
+        $(document).on('click', '#renameMyPokemon', function() {
+            renameMyPokemon();
+        });
+    });
+
+    function pokemonDetail(url) {
+        $('html, body').animate({ scrollTop: 0 }, 'fast');
+        
+        fetch(url).then(function(response) {
+            response.json().then(function(pokemon) {
+                const pokemonTypes = pokemon.types;
+                var pokemonTypeString = '';
+                pokemonTypes.forEach(pokemonType => {
+                    pokemonTypeString += pokemonType.type.name + ', ';
+                });
+                pokemonTypeString = pokemonTypeString.substring(0, pokemonTypeString.length - 2);
+
+                const pokemonMoves = pokemon.moves;
+                var pokemonMoveString = '';
+                pokemonMoves.forEach(pokemonMove => {
+                    pokemonMoveString += pokemonMove.move.name + ', ';
+                });
+                pokemonMoveString = pokemonMoveString.substring(0, pokemonMoveString.length - 2);
+
+                document.getElementById('detail').innerHTML = '';
+                document.getElementById('detail')
+                    .insertAdjacentHTML('beforeend',
+                        `<h2 id="pokemonDetailName">${pokemon.name}</h2>
+                        <img src="${pokemon.sprites.front_default}" height="120px" width="120px" id="pokemonDetailImage">
+                        <br>
+                        <button class="btn btn-primary mb-2" id="catchButton" onclick="catchPokemon()">Catch</button>
+                        <p class="bg-info rounded p-2"><b>Types:</b> ${pokemonTypeString}</p>
+                        <p class="bg-info rounded p-2"><b>Moves:</b> ${pokemonMoveString}</p>
+                        `
+                    );
+            });
+        });
+    }
+
+    function pokemonList(url) {
+        fetch(url)
+            .then(
+                function(response) {
+                    if(response.status != 200) {
+                        console.log(`Something went wrong. error: ${response.status}`);
+                        return;
+                    }
+
+                    response.json().then(function(data) {
+                        const pokemons = data.results;
+                        
+                        $('#prev').attr('url', data.previous);
+                        $('#next').attr('url', data.next);
+                        
+                        document.getElementById('pokemonList').innerHTML = '';
+                        pokemons.forEach(pokemon => {
+                            var pokemonImage = '';
+                            fetch(pokemon.url).then(function(response) {
+                                response.json().then(function(pokemonDetail) {
+                                    pokemonImage = pokemonDetail.sprites.front_default;
+                                    document.getElementById('pokemonList')
+                                        .insertAdjacentHTML('beforeend',
+                                            `<li onclick=pokemonDetail("${pokemon.url}") style="cursor: pointer;">
+                                                <img src="${pokemonImage}" height="48px" width="48px">
+                                                ${pokemon.name} 
+                                            </li>`
+                                        );
+                                });
+                            });
+                        });
+                    });
+                }
+            )
+            .catch(function(err) {
+                console.log(err);
+            });
+    }
+
+    function myPokemonList() {
+        fetch('http://localhost:5000/pokemons/my-pokemons')
+            .then(
+                function(response) {
+                    if(response.status != 200) {
+                        console.log(`Something went wrong. error: ${response.status}`);
+                        return;
+                    }
+
+                    document.getElementById('myPokemonList').innerHTML = '';
+                    response.json().then(function(data) {
+                        const pokemons = data.data[0];
+                        console.log(pokemons);
+                        
+                        pokemons.forEach(pokemon => {
+                            var pokemonImage = pokemon.image;
+                            document.getElementById('myPokemonList')
+                                .insertAdjacentHTML('beforeend',
+                                    `<tr>
+                                        <td><img src="${pokemonImage}" height="120px" width="120px"></td>
+                                        <td>${pokemon.name}</td>
+                                        <td>${pokemon.nickname}</td>
+                                        <td>
+                                            <button class="btn btn-warning releaseButton" onclick="releasePokemon(${pokemon.id})"><i class="fa fa-close"></i> Release</button>
+                                            <button class="btn btn-info renameButton" my-pokemon-id="${pokemon.id}" nickname="${pokemon.nickname}"><i class="fa fa-pencil"></i> Rename</button>
+                                        </td>
+                                    </tr>`
+                                );
+                        });
+                    });
+                }
+            )
+            .catch(function(err) {
+                console.log(err);
+            });
+    }
+
+    function saveMyPokemon() {
+        var nickname = $('#pokemonNickname').val();
+        var name = $('#pokemonDetailName').text();
+        var image = $('#pokemonDetailImage').attr('src');
+        
+        let data = {
+            nickname: nickname.toString(),
+            name: name,
+            image: image
+        };
+
+        fetch('http://localhost:5000/pokemons/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify(data)
+        }).then(function(response) {
+            response.json().then(function(res) {
+                alert('Saved to my pokemon');
+                $('#pokemonNicknameForm').remove();
+            });
+        });
+    }
+
+    function renameMyPokemon() {
+        var nickname = $('#pokemonNewNickname').val();
+        var myPokemonId = $('#renameMyPokemon').attr('my-pokemon-id');
+        var oldNickname = $('#renameMyPokemon').attr('old-nickname');
+
+        if(nickname == oldNickname) {
+            alert('New nickname is the same as old nickname');
+            $('#myPokemonRenameForm').remove();
+        } else {
+            let data = {
+                nickname: nickname.toString(),
+                id: myPokemonId
+            };
+
+            fetch('http://localhost:5000/pokemons/rename', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(data)
+            }).then(function(response) {
+                response.json().then(function(res) {
+                    alert('Pokemon renamed');
+                    $('#myPokemonRenameForm').remove();
+                    myPokemonList();
+                });
+            });
+        }
+    }
+
+    function catchPokemon() {
+        $('#pokemonNicknameForm').remove();
+
+        fetch('http://localhost:5000/pokemons/catch', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+        }).then(function(response) {
+            response.json().then(function(res) {
+                if(res.data == 0) {
+                    alert(res.message);
+                } else {
+                    $('#catchButton').after(`
+                        <div class="form-inline mt-2 mb-3" id="pokemonNicknameForm">
+                            <div class="input-group">
+                                <input class="form-control mr-sm-2" type="text" placeholder="Input Pokemon Nickname" id="pokemonNickname">
+                                <button class="btn btn-success my-2 my-sm-0" id="saveMyPokemon">Save Pokemon</button>
+                            </div>
+                        </div>
+                    `);
+                    console.log('success');
+                }
+            });
+        });
+    }
+
+    function releasePokemon(myPokemonId) {
+        fetch(`http://localhost:5000/pokemons/release?id=${myPokemonId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+        }).then(function(response) {
+            response.json().then(function(res) {
+                alert(res.message);
+
+                if(res.data == 1) {
+                    myPokemonList();
+                }
+            });
+        });
+    }
+</script>
