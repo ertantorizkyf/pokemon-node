@@ -33,7 +33,7 @@ export const savePokemon = async (req, res) => {
     const { name, image, nickname } = req.body;
 
     // * GET ALL POKEMONS WITH SIMILAR NICKNAME
-    const results = await db.promise().query(`SELECT * FROM my_pokemons WHERE nickname LIKE '${nickname}%' ORDER BY id ASC`);
+    const results = await db.promise().query(`SELECT * FROM my_pokemons WHERE nickname = '${nickname}' OR nickname LIKE '${nickname}-%' ORDER BY id ASC`);
     const myPokemons = results[0];
     var fibonacciNickname = '';
     var nicknames = [];
@@ -88,7 +88,7 @@ export const renamePokemon = async (req, res) => {
     const { id, nickname } = req.body;
 
     // * GET ALL POKEMONS WITH SIMILAR NICKNAME
-    const results = await db.promise().query(`SELECT * FROM my_pokemons WHERE nickname LIKE '${nickname}%' ORDER BY id ASC`);
+    const results = await db.promise().query(`SELECT * FROM my_pokemons WHERE nickname = '${nickname}' OR nickname LIKE '${nickname}-%' ORDER BY id ASC`);
     const myPokemons = results[0];
     var fibonacciNickname = '';
     var nicknames = [];
