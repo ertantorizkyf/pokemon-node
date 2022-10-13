@@ -5,7 +5,7 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
         <div class="navbar-nav">
-            <a class="nav-item nav-link" href="javascript:void(0)" id="pokemonListNav">Pokemon List</a>
+            <a class="nav-item nav-link active" href="javascript:void(0)" id="pokemonListNav">Pokemon List</a>
             <a class="nav-item nav-link" href="javascript:void(0)" id="myPokemonsNav">My Pokemons</a>
         </div>
     </div>
@@ -77,8 +77,10 @@
             if($('#pokemonListContainer').hasClass('d-none')) {
                 $('#pokemonListContainer').removeClass('d-none');
                 $('#pokemonListContainer').addClass('d-block');
+                $('#pokemonListNav').addClass('active');
                 $('#myPokemonsContainer').removeClass('d-block');
                 $('#myPokemonsContainer').addClass('d-none');
+                $('#myPokemonsNav').removeClass('active');
 
                 pokemonList('https://pokeapi.co/api/v2/pokemon');
                 document.getElementById('detail').innerHTML = '';
@@ -89,8 +91,10 @@
             if($('#myPokemonsContainer').hasClass('d-none')) {
                 $('#myPokemonsContainer').removeClass('d-none');
                 $('#myPokemonsContainer').addClass('d-block');
+                $('#myPokemonsNav').addClass('active');
                 $('#pokemonListContainer').removeClass('d-block');
                 $('#pokemonListContainer').addClass('d-none');
+                $('#pokemonListNav').removeClass('active');
 
                 myPokemonList();
             }
