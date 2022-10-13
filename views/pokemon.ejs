@@ -101,7 +101,8 @@
         });
         
         $(document).on('click', '#saveMyPokemon', function() {
-            saveMyPokemon();
+            var nickname = $('#pokemonNickname').val();
+            if(nickname != '') saveMyPokemon();
         });
 
         $(document).on('click', '.renameButton', function() {
@@ -119,7 +120,8 @@
         });
 
         $(document).on('click', '#renameMyPokemon', function() {
-            renameMyPokemon();
+            var nickname = $('#pokemonNewNickname').val();
+            if(nickname != '') renameMyPokemon();
         });
     });
 
